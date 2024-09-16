@@ -40,11 +40,13 @@ class Dot:
     def create_dot(cls, team, player):
         dot = Dot(team=team, player=player)
         dots.append(dot)
+        return dot
+
 for i in range(10):
     Dot.create_dot('red_dot', False)
 for i in range(10):
     Dot.create_dot('blue_dot', False)
-Player = Dot.create_dot('red_dot', True)
+player = Dot.create_dot('red_dot', True)
 
 covers = []
 class Cover:
@@ -85,15 +87,10 @@ def update(rt):
 
 def on_key_down(key):
     if key == keys.SPACE:
-        for dot in dots:
-            if dot.player == True:
-                for cover in covers:
-                    if dot.actor.distance_to(cover.start_pos) < cover.size:
-                        dot.in_cover = True
-                if dot.in_cover == True:
-                    if dot.team == 'red_dot':
-                        dot.team = 'blue_dot'
-                    else:
-                        dot.team = 'red_dot'
-                dot.actor.image = dot.team
-                dot.in_cover = False
+        for cover in covers:
+            if player.actor.distance_to(cover.start_pos) < cover.size:
+                if player.team == 'red_dot':
+                    player.team = 'blue_dot'
+                else:
+                    player.team = 'red_dot'
+                player.actor.image = player.team
