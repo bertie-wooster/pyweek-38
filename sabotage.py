@@ -1,4 +1,4 @@
-from tower import Tower
+#from tower import Tower
 from builders import Builder
 
 builders = [
