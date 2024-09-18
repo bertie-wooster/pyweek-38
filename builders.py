@@ -1,2 +1,5 @@
+from pgzero.actor import Actor
+
 class Builder:
-    pass
+    def __init__(self, pos):
+        self.actor = Actor('builder', pos)
