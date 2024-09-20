@@ -83,15 +83,17 @@ class Builder:
     
     def determine_next_job(self):
         world = self.world
+        nearest_storehouse, other_storehouse = world.find_storehouses(self.actor.x)
         if self.job and self.job.has_next:
             self.job = self.job.next()
-        elif world.needs_ladder and world.storehouse.has_ladder and not world.team.is_getting_ladder:
-            self.job = GetLadder(target_x=world.storehouse.position_x, reward=None)
+        elif world.needs_ladder and (nearest_storehouse.has_ladder or other_storehouse.has_ladder) and not world.team.is_getting_ladder:
+            self.job = GetLadder(target_x=nearest_storehouse.position_x if nearest_storehouse.has_ladder else other_storehouse.position_x, reward=None)
             print(self, "getting ladder")
-        elif world.needs_block and world.storehouse.has_block:
-            self.job = GetBlock(target_x=world.storehouse.position_x, reward=None)
+        elif world.needs_block and (nearest_storehouse.has_block or other_storehouse.has_block):
+            self.job = GetBlock(target_x=nearest_storehouse.position_x if nearest_storehouse.has_block else other_storehouse.position_x, reward=None)
             print(self, "getting block")
-        world.team.start_job(self.job)
+        if self.job:
+            world.team.start_job(self.job)
     
     def finish_job(self):
         pass
@@ -99,9 +101,17 @@ class Builder:
 class World:
     def __init__(self):
         self.team = Team()
-        self.storehouse = Storehouse(ladder_count=4, block_count=40, position_x=0)
+        self.left_storehouse = Storehouse(ladder_count=0, block_count=40, position_x=0)
+        self.right_storehouse = Storehouse(ladder_count=4, block_count=40, position_x=800)
         self.left_ladder = None
         self.right_ladder = None
+    
+    def find_storehouses(self, position_x):
+        left_dist = abs(self.left_storehouse.position_x - position_x)
+        right_dist = abs(self.right_storehouse.position_x - position_x)
+        if left_dist < right_dist:
+            return self.left_storehouse, self.right_storehouse
+        return self.right_storehouse, self.left_storehouse
     
     @property
     def needs_ladder(self):
