@@ -1,10 +1,12 @@
 #from tower import Tower
-from builders import Builder
+from builders import Builder, World
+
+world = World()
 
 builders = [
-    Builder((100, 500)), 
-    Builder((300, 500)), 
-    Builder((500, 500)),
+    Builder((100, 500), world), 
+    Builder((300, 500), world), 
+    Builder((500, 500), world),
 ]
 
 def draw():
@@ -14,4 +16,5 @@ def draw():
         builder.actor.draw()
 
 def update():
-    pass
+    for builder in builders:
+        builder.update()
