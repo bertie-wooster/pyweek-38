@@ -71,7 +71,7 @@ class PlaceLadder(Job):
             placed_block = Block.place_ladder(WIDTH//2-85, HEIGHT-105-(len(left_ladders)*50), left_ladders)
             left_ladders.append(placed_block)
         else:
-            placed_block = Block.place_ladder(WIDTH//2-85, HEIGHT-105-(len(right_ladders)*50), right_ladders)
+            placed_block = Block.place_ladder(WIDTH//2+85, HEIGHT-105-(len(right_ladders)*50), right_ladders)
             right_ladders.append(placed_block)
         return None
 
@@ -79,15 +79,15 @@ class PlaceBlock(Job):
     def __init__(self, target_x):
         self.target_x = target_x
         if self.target_x == WIDTH//2-85:
-                self.target_y = HEIGHT - 50*len(left_stone)-105
+                self.target_y = 50*len(left_ladders)-105
         else:
-            target_y = HEIGHT - 50*len(right_stone)-105
+            target_y = 50*len(right_ladders)-105
     def accomplish(self, world: 'World'):
         if self.target_x == WIDTH//2-85:
             placed_block = Block.place_stone(WIDTH//2-25, HEIGHT-105-(len(left_stone)*50), left_stone)
             left_stone.append(placed_block)
         else:
-            placed_block = Block.place_stone(WIDTH//2-25, HEIGHT-105-(len(right_stone)*50), right_stone)
+            placed_block = Block.place_stone(WIDTH//2+25, HEIGHT-105-(len(right_stone)*50), right_stone)
             right_stone.append(placed_block)
         return None
 
@@ -159,7 +159,7 @@ class Team:
 
 
 class Builder:
-    def __init__(self, pos, world, player: 'Player'):
+    def __init__(self, pos, world):
         self.job = None
         self.facing = 'right'
         self.actor = Actor('builder_right_1', pos)
@@ -169,7 +169,6 @@ class Builder:
         self.determine_next_job()
         self.animate_time = 0
         self.animation_num = '0'
-        self.player = player
 
     def __str__(self):
         return "Builder(has {}, job {})".format(self.item, self.job)
@@ -243,9 +242,9 @@ class World:
         self.left_storehouse = Storehouse(ladder_count=100000, block_count=4000000, position_x=0)
         self.right_storehouse = Storehouse(ladder_count=100000, block_count=40000000, position_x=800)
         self.left_ladder = None
-        self.left_ladder_x = WIDTH // 2 - 85
+        self.left_ladder_x = 300
         self.right_ladder = None
-        self.right_ladder_x = WIDTH // 2 + 85
+        self.right_ladder_x = 500
 
     def find_storehouses(self, position_x):
         left_dist = abs(self.left_storehouse.position_x - position_x)
@@ -272,17 +271,3 @@ class World:
         return len(left_ladders) < len(left_stone) or len(right_ladders) < len(right_stone)
 
     needs_block = True
-
-class Player:
-    def __init__(self, pos: Tuple[float, float], world: World):
-        self.actor = Actor('player', pos)
-        self.world = world
-    
-    def move_left(self):
-        self.actor.x -= 5
-    
-    def move_right(self):
-        self.actor.x += 5
-    
-    def draw(self):
-        self.actor.draw()
