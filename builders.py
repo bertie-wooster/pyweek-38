@@ -67,9 +67,13 @@ class GetBlock(Job):
 
 class PlaceLadder(Job):
     def accomplish(self, world: 'World'):
-        if self.target_x == world.left_storehouse.position_x:
-            return world.left_storehouse.take_block()
-        return world.right_storehouse.take_block()
+        if self.target_x == WIDTH//2-85:
+            placed_block = Block.place_ladder(WIDTH//2-85, HEIGHT-105-(len(left_ladders)*50), left_ladders)
+            left_ladders.append(placed_block)
+        else:
+            placed_block = Block.place_ladder(WIDTH//2-85, HEIGHT-105-(len(right_ladders)*50), right_ladders)
+            right_ladders.append(placed_block)
+        return None
 
 class PlaceBlock(Job):
     def __init__(self, target_x):
@@ -80,11 +84,11 @@ class PlaceBlock(Job):
             target_y = 50*len(right_ladders)-105
     def accomplish(self, world: 'World'):
         if self.target_x == WIDTH//2-85:
-            placed_block = Block.place_ladder(WIDTH//2-85, HEIGHT-105-(len(left_ladders)*50), left_ladders)
-            left_ladders.append(placed_block)
+            placed_block = Block.place_stone(WIDTH//2-25, HEIGHT-105-(len(left_stone)*50), left_stone)
+            left_stone.append(placed_block)
         else:
-            placed_block = Block.place_ladder(WIDTH//2-85, HEIGHT-105-(len(right_ladders)*50), right_ladders)
-            right_ladders.append(placed_block)
+            placed_block = Block.place_stone(WIDTH//2-25, HEIGHT-105-(len(right_stone)*50), right_stone)
+            right_stone.append(placed_block)
         return None
 
 class Item:
