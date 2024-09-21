@@ -1,3 +1,8 @@
+import os
+os.environ['SDL_VIDEO_WINDOW_POS'] = f'0,0'
+
+import pgzrun
+
 #from tower import Tower
 from builders import Builder, World
 
@@ -18,3 +23,5 @@ def draw():
 def update():
     for builder in builders:
         builder.update()
+
+pgzrun.go()
