@@ -13,6 +13,8 @@ _JOBS = [
 ]
 
 class Job:
+    target_y = 500
+
     def __init__(self, target_x: float):
         self.target_x = target_x
     
@@ -57,7 +59,7 @@ class PlaceLadder(Job):
     pass
 
 class PlaceBlock(Job):
-    pass
+    target_y = 400
 
 class Item:
     image = None
@@ -139,13 +141,24 @@ class Builder:
         return "Builder(has {}, job {})".format(self.item, self.job)
     
     def update(self):
-        if self.actor.x == self.job.target_x:
+        if self.actor.x == self.job.target_x and self.actor.y == self.job.target_y:
             self.finish_job()
         
-        if self.actor.x < self.job.target_x:
-            self.actor.x += 5
-        elif self.actor.x > self.job.target_x:
-            self.actor.x -= 5
+        if self.actor.y == 500:
+            # on the ground
+            if self.actor.x < self.job.target_x:
+                self.actor.x += 5
+            elif self.actor.x > self.job.target_x:
+                self.actor.x -= 5
+            else:
+                # begin climbing
+                self.actor.y -= 5
+        else:
+            # on or at a ladder
+            if self.actor.y < self.job.target_y:
+                self.actor.y += 5
+            elif self.actor.y > self.job.target_y:
+                self.actor.y -= 5
         if self.item:
             self.item.set_anchor(self.actor.pos)
     
