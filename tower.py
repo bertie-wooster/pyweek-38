@@ -5,82 +5,95 @@ import random
 WIDTH = 800
 HEIGHT = 600
 
-class Tower:
-    pass
-
-blocks=[]
-
-def draw():
-    for block in blocks:
-        block.draw()
-
-def update(rt):
-    for block in blocks:
-        block.update(rt)
-
-def on_mouse_down(pos):
-    block_1 = Block(pos)
-    blocks.append(block_1)
-
-
-###
-###
-###
-class Vector:
-    def __init__(self, magnitude, theta):
-        self.magnitude = magnitude
-        self.theta = theta
-
-class AccelerationVector(Vector):
-    pass
-
-class ConstantVector(Vector):
-    pass
-
 blocks = []
-class Block:
-    def __init__(self, actor):
-        self.side = 50
-        self.actor = actor
-        self.speed_x = 0
-        self.speed_y = 0
-        self.main_vector = ConstantVector(0, math.radians(-15))
-        self.gravity_vector = Vector(0, 0)
-        self.normal_ground_vector = Vector(0, 0)
-        self.vectors = [self.main_vector, self.gravity_vector, self.normal_ground_vector]
-        self.second_clock = 0
 
-    def gravity(self):
-        if self.actor.y < HEIGHT - self.side//2:
-            self.gravity_vector = Vector(self.gravity_vector.magnitude + 9.8/60, math.radians(90))
-        else:
-            self.normal_ground_vector = Vector(self.gravity_vector.magnitude,
-            math.radians(math.degrees(self.gravity_vector.theta) -180))
+right_ladders=[]
+
+right_stone = []
+middle_stone = []
+left_stone = []
+
+left_ladders=[]
+
+class Block:
+    def __init__(self, actor, collum, mass, hides_view):
+        self.side = 50
+        self.mass = mass
+        self.hides_view = hides_view
+        self.damaged = False
+        self.fall = False
+        self.actor = actor
+        self.collum = collum
+        self.second_clock = 0
 
     def draw(self):
         self.actor.draw()
 
     def update(self, rt):
-        self.gravity()
-        for vector in self.vectors:
-            if vector.magnitude > 0:
-                self.speed_x += math.cos(vector.theta)*vector.magnitude
-                self.speed_y += math.sin(vector.theta)*vector.magnitude
-        self.actor.x += self.speed_x
-        self.actor.y += self.speed_y
-        self.speed_x = 0
-        self.speed_y = 0
-        self.vectors.clear()
-        self.vectors.append(self.main_vector)
-        self.vectors.append(self.gravity_vector)
-        self.vectors.append(self.normal_ground_vector)
+        if self.mass == 100:
+            for block in self.collum:
+                if block is not self:
+                    if self.actor.distance_to(block.actor.pos) < 50:
+                        pass
+                    else:
+                        self.fall = True
+            if self.fall:
+                self.fall_down()
+            blocks_above = []
+            if self.damaged:
+                self.actor.image = 'block_grey_damaged'
+                for block in self.collum:
+                    if block is not self:
+                        if block.actor.y < self.actor.y:
+                            blocks_above.append(block)
+
+                if len(blocks_above) >= 3:
+                    blocks.remove(self)
+                    self.collum.remove(self)
+                    for block in blocks_above:
+                        block.fall = True
+        else:
+            if self.damaged:
+                for block in list(self.collum):
+                    if block is not self:
+                        if block.actor.y < self.actor.y:
+                            block.create_rubble(3)
+                            blocks.remove(block)
+                            self.collum.remove(block)
+                self.create_rubble(3)
+                blocks.remove(self)
+                self.collum.remove(self)
+
+    def create_rubble(self, intensity):
+        for i in range(10**intensity):
+            pass
+
+    def fall_down(self):
+        self.actor.y += 2
+        for block in self.collum:
+            if block is not self:
+                if self.actor.colliderect(block.actor):
+                    if block.fall != True:
+                        self.fall = False
+                        self.actor.y = block.actor.y - 50
+                        return
+        if self.actor.y >= HEIGHT - 25:
+            self.fall = False
+            self.actor.y = HEIGHT - 25
+            return
 
     @classmethod
-    def create_block(cls, x, y):
-        block = Block(Actor('block_grey', (x, y)))
-        blocks.append(block)
+    def place_stone(cls, x, y, collum):
+        stone = Block(Actor('block_grey', (x, y)), collum, mass=100, hides_view=True)
+        blocks.append(stone)
+        return stone
 
-Block.create_block(WIDTH//2, HEIGHT//2)
+    @classmethod
+    def place_ladder(cls, x, y, collum):
+        ladder = Block(Actor('ladder', (x, y)), collum, mass=20, hides_view=False)
+        blocks.append(ladder)
+        return ladder
+
 
 def draw():
     screen.clear()
@@ -89,18 +102,33 @@ def draw():
 def update(rt):
     for block in blocks:
         block.update(rt)
-    if keyboard.a:
+
+
+def on_mouse_down(pos, button):
+    if button == mouse.RIGHT:
+        closest_click = 100000
         for block in blocks:
-            block.main_vector.theta += math.radians(3)
-    if keyboard.d:
-        for block in blocks:
-            block.main_vector.theta -= math.radians(3)
+            mouse_pos_dist = block.actor.distance_to(pos)
+            if mouse_pos_dist < closest_click:
+                closest_click = mouse_pos_dist
+                closest_block = block
+        closest_block.damaged = True
+
 def on_key_down(key):
+    if key == keys.Q:
+        placed_block = Block.place_stone(WIDTH//2-50, HEIGHT-25-(len(left_stone)*50), left_stone)
+        left_stone.append(placed_block)
     if key == keys.W:
-        for block in blocks:
-            block.main_vector.magnitude += 1
-    if key == keys.S:
-        for block in blocks:
-            if block.main_vector.magnitude >= 1:
-                block.main_vector.magnitude -= 1
+        placed_block = Block.place_stone(WIDTH//2, HEIGHT-25-(len(middle_stone)*50), middle_stone)
+        middle_stone.append(placed_block)
+    if key == keys.E:
+        placed_block = Block.place_stone(WIDTH//2+50, HEIGHT-25-(len(right_stone)*50), right_stone)
+        right_stone.append(placed_block)
+    if key == keys.LEFT:
+        placed_block = Block.place_ladder(WIDTH//2-110, HEIGHT-25-(len(left_ladders)*50), left_ladders)
+        left_ladders.append(placed_block)
+    if key == keys.RIGHT:
+        placed_block = Block.place_ladder(WIDTH//2+110, HEIGHT-25-(len(right_ladders)*50), right_ladders)
+        right_ladders.append(placed_block)
+
 
