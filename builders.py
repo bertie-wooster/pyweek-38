@@ -234,6 +234,7 @@ class Builder:
     def finish_job(self):
         if self.job.can_accomplish(self.actor.x, self.actor.y, self.world):
             self.item = self.job.accomplish(self.world)
+            self.world.team.finish_job(self.job)
         self.determine_next_job()
 
 
