@@ -2,19 +2,19 @@ import os
 os.environ['SDL_VIDEO_WINDOW_POS'] = f'0,0'
 
 import pgzrun
-from pgzero.builtins import keyboard
+from pgzero.builtins import keyboard, mouse, keys
 
 from tower import Block, Rubble, blocks, rubbles, right_ladders, right_stone, left_stone, left_ladders, WIDTH, HEIGHT
-from builders import Builder, World
-from player import Player
+from builders import Builder, World, Player
 
 world = World()
+
 player = Player((WIDTH/2, 500), world)
 
 builders = [
-    Builder((100, 500), world),
-    Builder((300, 500), world),
-    Builder((500, 500), world),
+    Builder((100, 500), world, player),
+    Builder((300, 500), world, player),
+    Builder((500, 500), world, player),
 ]
 
 def draw():
