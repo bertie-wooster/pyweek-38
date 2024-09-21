@@ -13,16 +13,15 @@ _JOBS = [
 ]
 
 class Job:
-    def __init__(self, target_x, reward):
+    def __init__(self, target_x: float):
         self.target_x = target_x
-        self.reward = reward
     
     def accomplish(self):
-        return self.reward
+        return None
     
     has_next = False
 
-    def next(self, world):
+    def next(self, world: 'World'):
         raise NotImplementedError()
 
     def __str__(self):
@@ -34,7 +33,10 @@ class GetLadder(Job):
     def next(self, world: 'World'):
         current_x = self.target_x
         ladder_x = world.find_ladder(current_x, exists = False)
-        return PlaceLadder(target_x=ladder_x, reward=None)
+        return PlaceLadder(target_x=ladder_x)
+    
+    def accomplish(self):
+        return "ladder"
 
 class GetBlock(Job):
     has_next = True
@@ -42,7 +44,10 @@ class GetBlock(Job):
     def next(self, world: 'World'):
         current_x = self.target_x
         ladder_x = world.find_ladder(current_x, exists = True)
-        return PlaceBlock(target_x=ladder_x, reward=None)
+        return PlaceBlock(target_x=ladder_x)
+    
+    def accomplish(self):
+        return "block"
 
 class PlaceLadder(Job):
     pass
@@ -55,7 +60,7 @@ class Item:
         pass
 
 class Storehouse:
-    def __init__(self, ladder_count, block_count, position_x):
+    def __init__(self, ladder_count, block_count, position_x: float):
         self.ladder_count = ladder_count
         self.block_count = block_count
         self.position_x = position_x
@@ -115,13 +120,12 @@ class Builder:
         if self.job and self.job.has_next:
             self.job = self.job.next(world)
         elif world.needs_ladder and (nearest_storehouse.has_ladder or other_storehouse.has_ladder) and not world.team.is_getting_ladder:
-            self.job = GetLadder(target_x=nearest_storehouse.position_x if nearest_storehouse.has_ladder else other_storehouse.position_x, reward="ladder")
-            print(self)
+            self.job = GetLadder(target_x=nearest_storehouse.position_x if nearest_storehouse.has_ladder else other_storehouse.position_x)
         elif world.needs_block and (nearest_storehouse.has_block or other_storehouse.has_block):
-            self.job = GetBlock(target_x=nearest_storehouse.position_x if nearest_storehouse.has_block else other_storehouse.position_x, reward=None)
-            print(self)
+            self.job = GetBlock(target_x=nearest_storehouse.position_x if nearest_storehouse.has_block else other_storehouse.position_x)
         if self.job:
             world.team.start_job(self.job)
+        print(self)
     
     def finish_job(self):
         self.item = self.job.accomplish()
