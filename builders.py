@@ -1,6 +1,7 @@
 import random
 from pgzero.builtins import *
 from typing import Tuple
+from tower import Block, blocks, right_ladders, right_stone, left_stone, left_ladders, WIDTH, HEIGHT
 _JOBS = [
     "get ladder",
     "get stone",
@@ -21,6 +22,15 @@ class Job:
     def accomplish(self, world: 'World'):
         return None
 
+    def can_accomplish(self, builder_x, builder_y, world):
+        print('!!!')
+        if builder_y == self.target_y:
+            print('AAA')
+            if builder_x == self.target_x:
+                print('BBB')
+                return True
+        return False
+
     has_next = False
 
     def next(self, world: 'World'):
@@ -34,7 +44,7 @@ class GetLadder(Job):
 
     def next(self, world: 'World'):
         current_x = self.target_x
-        ladder_x = world.find_ladder(current_x, exists = False)
+        ladder_x = world.find_ladder(current_x, ladder_tall_enough = False)
         return PlaceLadder(target_x=ladder_x)
 
     def accomplish(self, world: 'World'):
@@ -47,7 +57,7 @@ class GetBlock(Job):
 
     def next(self, world: 'World'):
         current_x = self.target_x
-        ladder_x = world.find_ladder(current_x, exists = True)
+        ladder_x = world.find_ladder(current_x, ladder_tall_enough = True)
         return PlaceBlock(target_x=ladder_x)
 
     def accomplish(self, world: 'World'):
@@ -56,10 +66,26 @@ class GetBlock(Job):
         return world.right_storehouse.take_block()
 
 class PlaceLadder(Job):
-    pass
+    def accomplish(self, world: 'World'):
+        if self.target_x == world.left_storehouse.position_x:
+            return world.left_storehouse.take_block()
+        return world.right_storehouse.take_block()
 
 class PlaceBlock(Job):
-    target_y = 400
+    def __init__(self, target_x):
+        self.target_x = target_x
+        if self.target_x == WIDTH//2-85:
+                self.target_y = 50*len(left_ladders)-105
+        else:
+            target_y = 50*len(right_ladders)-105
+    def accomplish(self, world: 'World'):
+        if self.target_x == WIDTH//2-85:
+            placed_block = Block.place_ladder(WIDTH//2-85, HEIGHT-105-(len(left_ladders)*50), left_ladders)
+            left_ladders.append(placed_block)
+        else:
+            placed_block = Block.place_ladder(WIDTH//2-85, HEIGHT-105-(len(right_ladders)*50), right_ladders)
+            right_ladders.append(placed_block)
+        return None
 
 class Item:
     image = None
@@ -201,14 +227,16 @@ class Builder:
         print(self)
 
     def finish_job(self):
-        self.item = self.job.accomplish(self.world)
+        if self.job.can_accomplish(self.actor.x, self.actor.y, self.world):
+            self.item = self.job.accomplish(self.world)
         self.determine_next_job()
+
 
 class World:
     def __init__(self):
         self.team = Team()
-        self.left_storehouse = Storehouse(ladder_count=0, block_count=40, position_x=0)
-        self.right_storehouse = Storehouse(ladder_count=4, block_count=40, position_x=800)
+        self.left_storehouse = Storehouse(ladder_count=100000, block_count=4000000, position_x=0)
+        self.right_storehouse = Storehouse(ladder_count=100000, block_count=40000000, position_x=800)
         self.left_ladder = None
         self.left_ladder_x = 300
         self.right_ladder = None
@@ -221,8 +249,8 @@ class World:
             return self.left_storehouse, self.right_storehouse
         return self.right_storehouse, self.left_storehouse
 
-    def find_ladder(self, position_x, exists=True):
-        if exists and not self.right_ladder:
+    def find_ladder(self, position_x, ladder_tall_enough=True):
+        if ladder_tall_enough and not self.right_ladder:
             return self.left_ladder_x
         elif not self.right_ladder:
             return self.right_ladder_x
@@ -236,6 +264,6 @@ class World:
 
     @property
     def needs_ladder(self):
-        return self.left_ladder is None or self.right_ladder is None
+        return len(left_ladders) < len(left_stone) or len(right_ladders) < len(right_stone)
 
     needs_block = True
