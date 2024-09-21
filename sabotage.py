@@ -2,11 +2,14 @@ import os
 os.environ['SDL_VIDEO_WINDOW_POS'] = f'0,0'
 
 import pgzrun
+from pgzero.builtins import keyboard
 
 from tower import Block, Rubble, blocks, rubbles, right_ladders, right_stone, left_stone, left_ladders, WIDTH, HEIGHT
 from builders import Builder, World
+from player import Player
 
 world = World()
+player = Player((WIDTH/2, 500), world)
 
 builders = [
     Builder((100, 500), world),
@@ -23,6 +26,7 @@ def draw():
         rubble.draw()
     for builder in builders:
         builder.draw()
+    player.draw()
 
 def update(rt):
     for builder in builders:
@@ -31,6 +35,10 @@ def update(rt):
         block.update(rt)
     for rubble in rubbles:
         rubble.update()
+    if keyboard.left:
+        player.move_left()
+    if keyboard.right:
+        player.move_right()
 
 def on_mouse_down(pos, button):
     if button == mouse.RIGHT:
@@ -49,11 +57,11 @@ def on_key_down(key):
     if key == keys.E:
         placed_block = Block.place_stone(WIDTH//2+25, HEIGHT-105-(len(right_stone)*50), right_stone)
         right_stone.append(placed_block)
-    if key == keys.LEFT:
-        placed_block = Block.place_ladder(WIDTH//2-85, HEIGHT-105-(len(left_ladders)*50), left_ladders)
-        left_ladders.append(placed_block)
-    if key == keys.RIGHT:
-        placed_block = Block.place_ladder(WIDTH//2+85, HEIGHT-105-(len(right_ladders)*50), right_ladders)
-        right_ladders.append(placed_block)
+    # if key == keys.LEFT:
+    #     placed_block = Block.place_ladder(WIDTH//2-85, HEIGHT-105-(len(left_ladders)*50), left_ladders)
+    #     left_ladders.append(placed_block)
+    # if key == keys.RIGHT:
+    #     placed_block = Block.place_ladder(WIDTH//2+85, HEIGHT-105-(len(right_ladders)*50), right_ladders)
+    #     right_ladders.append(placed_block)
 
 pgzrun.go()
