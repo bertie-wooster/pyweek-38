@@ -66,12 +66,18 @@ class GetBlock(Job):
         return world.right_storehouse.take_block()
 
 class PlaceLadder(Job):
+    def __init__(self, target_x):
+        self.target_x = target_x
+        if self.target_x == WIDTH//2-85:
+                self.target_y = HEIGHT - 50*len(left_ladders)-105
+        else:
+            self.target_y = HEIGHT - 50*len(right_ladders)-105
     def accomplish(self, world: 'World'):
         if self.target_x == WIDTH//2-85:
             placed_block = Block.place_ladder(WIDTH//2-85, HEIGHT-105-(len(left_ladders)*50), left_ladders)
             left_ladders.append(placed_block)
         else:
-            placed_block = Block.place_ladder(WIDTH//2-85, HEIGHT-105-(len(right_ladders)*50), right_ladders)
+            placed_block = Block.place_ladder(WIDTH//2+85, HEIGHT-105-(len(right_ladders)*50), right_ladders)
             right_ladders.append(placed_block)
         return None
 
@@ -81,13 +87,13 @@ class PlaceBlock(Job):
         if self.target_x == WIDTH//2-85:
                 self.target_y = HEIGHT - 50*len(left_stone)-105
         else:
-            target_y = HEIGHT - 50*len(right_stone)-105
+            self.target_y = HEIGHT - 50*len(right_stone)-105
     def accomplish(self, world: 'World'):
         if self.target_x == WIDTH//2-85:
             placed_block = Block.place_stone(WIDTH//2-25, HEIGHT-105-(len(left_stone)*50), left_stone)
             left_stone.append(placed_block)
         else:
-            placed_block = Block.place_stone(WIDTH//2-25, HEIGHT-105-(len(right_stone)*50), right_stone)
+            placed_block = Block.place_stone(WIDTH//2+25, HEIGHT-105-(len(right_stone)*50), right_stone)
             right_stone.append(placed_block)
         return None
 
@@ -278,12 +284,12 @@ class Player:
     def __init__(self, pos: Tuple[float, float], world: World):
         self.actor = Actor('player', pos)
         self.world = world
-    
+
     def move_left(self):
         self.actor.x -= 5
-    
+
     def move_right(self):
         self.actor.x += 5
-    
+
     def draw(self):
         self.actor.draw()
