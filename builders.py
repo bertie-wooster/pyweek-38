@@ -1,4 +1,4 @@
-import random
+from typing import Tuple
 from pgzero.builtins import *
 
 _JOBS = [
@@ -64,11 +64,11 @@ class PlaceBlock(Job):
 class Item:
     image = None
 
-    def __init__(self, pos: tuple[float, float]):
+    def __init__(self, pos: Tuple[float, float]):
         self.actor = Actor(self.image, pos)
         self.anchor = pos
 
-    def set_anchor(self, pos: tuple[float, float]):
+    def set_anchor(self, pos: Tuple[float, float]):
         self.anchor = pos
 
     def draw(self):
