@@ -1,14 +1,14 @@
-from typing import Tuple
+import random
 from pgzero.builtins import *
-
+from typing import Tuple
 _JOBS = [
     "get ladder",
-    "get block",
+    "get stone",
     "place ladder",
-    "place block",
+    "place stone",
     "guard",
     "final attack",
-    "return block",
+    "return stone",
     "return ladder",
 ]
 
@@ -17,10 +17,10 @@ class Job:
 
     def __init__(self, target_x: float):
         self.target_x = target_x
-    
+
     def accomplish(self, world: 'World'):
         return None
-    
+
     has_next = False
 
     def next(self, world: 'World'):
@@ -28,7 +28,7 @@ class Job:
 
     def __str__(self):
         return self.__class__.__name__
-    
+
 class GetLadder(Job):
     has_next = True
 
@@ -36,7 +36,7 @@ class GetLadder(Job):
         current_x = self.target_x
         ladder_x = world.find_ladder(current_x, exists = False)
         return PlaceLadder(target_x=ladder_x)
-    
+
     def accomplish(self, world: 'World'):
         if self.target_x == world.left_storehouse.position_x:
             return world.left_storehouse.take_ladder()
@@ -49,12 +49,12 @@ class GetBlock(Job):
         current_x = self.target_x
         ladder_x = world.find_ladder(current_x, exists = True)
         return PlaceBlock(target_x=ladder_x)
-    
+
     def accomplish(self, world: 'World'):
         if self.target_x == world.left_storehouse.position_x:
             return world.left_storehouse.take_block()
         return world.right_storehouse.take_block()
-    
+
 class PlaceLadder(Job):
     pass
 
@@ -79,11 +79,11 @@ class Item:
 
 class Ladder(Item):
     image = 'ladder'
-    
+
     def __str__(self):
         return "a ladder"
 
-class Block(Item):
+class Stone(Item):
     image = 'ladder'
 
     def __str__(self):
@@ -94,7 +94,7 @@ class Storehouse:
         self.ladder_count = ladder_count
         self.block_count = block_count
         self.position_x = position_x
-    
+
     def take_ladder(self):
         if self.ladder_count > 0:
             self.ladder_count -= 1
@@ -103,12 +103,12 @@ class Storehouse:
     def take_block(self):
         if self.block_count > 0:
             self.block_count -= 1
-            return Block((self.position_x, 500))
-    
+            return Stone((self.position_x, 500))
+
     @property
     def has_ladder(self):
         return self.ladder_count > 0
-    
+
     @property
     def has_block(self):
         return self.block_count > 0
@@ -116,40 +116,65 @@ class Storehouse:
 class Team:
     def __init__(self):
         self.active_jobs = []
-    
+
     def start_job(self, job):
         self.active_jobs.append(job.__class__)
-    
+
     def finish_job(self, job):
         self.active_jobs.remove(job.__class__)
 
     @property
     def is_getting_ladder(self):
         return GetLadder in self.active_jobs
-    
+
 
 class Builder:
     def __init__(self, pos, world):
         self.job = None
-        self.actor = Actor('builder', pos)
+        self.facing = 'right'
+        self.actor = Actor('builder_right_1', pos)
         self.y_value = 100
         self.world = world
         self.item: Item = None
         self.determine_next_job()
-    
+        self.animate_time = 0
+        self.animation_num = '0'
+
     def __str__(self):
         return "Builder(has {}, job {})".format(self.item, self.job)
-    
-    def update(self):
+
+    def determine_actor_image(self, rt):
+        self.animate_time += rt
+        if self.animate_time >= 0.1:
+            self.animate_time = 0
+            if self.animation_num == '1':
+                self.animation_num = '0'
+            else:
+                self.animation_num = '1'
+        if isinstance(self.item, Ladder):
+            self.actor.image = 'builder_'+self.facing+'_ladder_'+self.animation_num
+        elif isinstance(self.item, Stone):
+            self.actor.image = 'builder_'+self.facing+'_stone_'+self.animation_num
+        else:
+            self.actor.image = 'builder_'+self.facing+'_'+self.animation_num
+
+    def draw(self):
+        self.actor.draw()
+
+
+    def update(self, rt):
+        self.determine_actor_image(rt)
         if self.actor.x == self.job.target_x and self.actor.y == self.job.target_y:
             self.finish_job()
-        
+
         if self.actor.y == 500:
             # on the ground
             if self.actor.x < self.job.target_x:
                 self.actor.x += 5
+                self.facing = 'right'
             elif self.actor.x > self.job.target_x:
                 self.actor.x -= 5
+                self.facing = 'left'
             else:
                 # begin climbing
                 self.actor.y -= 5
@@ -161,7 +186,7 @@ class Builder:
                 self.actor.y -= 5
         if self.item:
             self.item.set_anchor(self.actor.pos)
-    
+
     def determine_next_job(self):
         world = self.world
         nearest_storehouse, other_storehouse = world.find_storehouses(self.actor.x)
@@ -174,7 +199,7 @@ class Builder:
         if self.job:
             world.team.start_job(self.job)
         print(self)
-    
+
     def finish_job(self):
         self.item = self.job.accomplish(self.world)
         self.determine_next_job()
@@ -188,14 +213,14 @@ class World:
         self.left_ladder_x = 300
         self.right_ladder = None
         self.right_ladder_x = 500
-    
+
     def find_storehouses(self, position_x):
         left_dist = abs(self.left_storehouse.position_x - position_x)
         right_dist = abs(self.right_storehouse.position_x - position_x)
         if left_dist < right_dist:
             return self.left_storehouse, self.right_storehouse
         return self.right_storehouse, self.left_storehouse
-    
+
     def find_ladder(self, position_x, exists=True):
         if exists and not self.right_ladder:
             return self.left_ladder_x
@@ -208,9 +233,9 @@ class World:
             return self.left_ladder_x
         else:
             return self.right_ladder_x
-    
+
     @property
     def needs_ladder(self):
         return self.left_ladder is None or self.right_ladder is None
-    
+
     needs_block = True
