@@ -79,9 +79,9 @@ class PlaceBlock(Job):
     def __init__(self, target_x):
         self.target_x = target_x
         if self.target_x == WIDTH//2-85:
-                self.target_y = 50*len(left_ladders)-105
+                self.target_y = HEIGHT - 50*len(left_stone)-105
         else:
-            target_y = 50*len(right_ladders)-105
+            target_y = HEIGHT - 50*len(right_stone)-105
     def accomplish(self, world: 'World'):
         if self.target_x == WIDTH//2-85:
             placed_block = Block.place_stone(WIDTH//2-25, HEIGHT-105-(len(left_stone)*50), left_stone)
@@ -243,9 +243,9 @@ class World:
         self.left_storehouse = Storehouse(ladder_count=100000, block_count=4000000, position_x=0)
         self.right_storehouse = Storehouse(ladder_count=100000, block_count=40000000, position_x=800)
         self.left_ladder = None
-        self.left_ladder_x = 300
+        self.left_ladder_x = WIDTH // 2 - 85
         self.right_ladder = None
-        self.right_ladder_x = 500
+        self.right_ladder_x = WIDTH // 2 + 85
 
     def find_storehouses(self, position_x):
         left_dist = abs(self.left_storehouse.position_x - position_x)
