@@ -159,7 +159,7 @@ class Team:
 
 
 class Builder:
-    def __init__(self, pos, world):
+    def __init__(self, pos, world, player: 'Player'):
         self.job = None
         self.facing = 'right'
         self.actor = Actor('builder_right_1', pos)
@@ -169,6 +169,7 @@ class Builder:
         self.determine_next_job()
         self.animate_time = 0
         self.animation_num = '0'
+        self.player = player
 
     def __str__(self):
         return "Builder(has {}, job {})".format(self.item, self.job)
@@ -271,3 +272,17 @@ class World:
         return len(left_ladders) < len(left_stone) or len(right_ladders) < len(right_stone)
 
     needs_block = True
+
+class Player:
+    def __init__(self, pos: Tuple[float, float], world: World):
+        self.actor = Actor('player', pos)
+        self.world = world
+    
+    def move_left(self):
+        self.actor.x -= 5
+    
+    def move_right(self):
+        self.actor.x += 5
+    
+    def draw(self):
+        self.actor.draw()
