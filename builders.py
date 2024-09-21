@@ -16,7 +16,7 @@ class Job:
     def __init__(self, target_x: float):
         self.target_x = target_x
     
-    def accomplish(self):
+    def accomplish(self, world: 'World'):
         return None
     
     has_next = False
@@ -35,8 +35,10 @@ class GetLadder(Job):
         ladder_x = world.find_ladder(current_x, exists = False)
         return PlaceLadder(target_x=ladder_x)
     
-    def accomplish(self):
-        return "ladder"
+    def accomplish(self, world: 'World'):
+        if self.target_x == world.left_storehouse.position_x:
+            return world.left_storehouse.take_ladder()
+        return world.right_storehouse.take_ladder()
 
 class GetBlock(Job):
     has_next = True
@@ -46,8 +48,8 @@ class GetBlock(Job):
         ladder_x = world.find_ladder(current_x, exists = True)
         return PlaceBlock(target_x=ladder_x)
     
-    def accomplish(self):
-        return "block"
+    def accomplish(self, world: 'World'):
+        return None
 
 class PlaceLadder(Job):
     pass
@@ -55,9 +57,26 @@ class PlaceLadder(Job):
 class PlaceBlock(Job):
     pass
 
-class Item:
-    def receive():
+class Item:    
+    def set_anchor(self, pos: tuple[float, float]):
         pass
+
+    def update(self):
+        pass
+
+class Ladder(Item):
+    def __init__(self, pos: tuple[float, float]):
+        self.actor = Actor('ladder', pos)
+        self.anchor = pos
+
+    def set_anchor(self, pos: tuple[float, float]):
+        self.anchor = pos
+
+    def draw(self):
+        self.actor.draw()
+    
+    def __str__(self):
+        return "a ladder"
 
 class Storehouse:
     def __init__(self, ladder_count, block_count, position_x: float):
@@ -66,7 +85,9 @@ class Storehouse:
         self.position_x = position_x
     
     def take_ladder(self):
-        pass
+        if self.ladder_count > 0:
+            self.ladder_count -= 1
+            return Ladder((self.position_x, 500))
 
     def take_block(self):
         pass
@@ -100,19 +121,22 @@ class Builder:
         self.actor = Actor('builder', pos)
         self.y_value = 100
         self.world = world
-        self.item = None
+        self.item: Item = None
         self.determine_next_job()
     
     def __str__(self):
         return "Builder(has {}, job {})".format(self.item, self.job)
     
     def update(self):
+        if self.actor.x == self.job.target_x:
+            self.finish_job()
+        
         if self.actor.x < self.job.target_x:
             self.actor.x += 5
         elif self.actor.x > self.job.target_x:
             self.actor.x -= 5
-        else:
-            self.finish_job()
+        if self.item:
+            self.item.set_anchor(self.actor.pos)
     
     def determine_next_job(self):
         world = self.world
@@ -128,7 +152,7 @@ class Builder:
         print(self)
     
     def finish_job(self):
-        self.item = self.job.accomplish()
+        self.item = self.job.accomplish(self.world)
         self.determine_next_job()
 
 class World:
