@@ -49,24 +49,21 @@ class GetBlock(Job):
         return PlaceBlock(target_x=ladder_x)
     
     def accomplish(self, world: 'World'):
-        return None
-
+        if self.target_x == world.left_storehouse.position_x:
+            return world.left_storehouse.take_block()
+        return world.right_storehouse.take_block()
+    
 class PlaceLadder(Job):
     pass
 
 class PlaceBlock(Job):
     pass
 
-class Item:    
-    def set_anchor(self, pos: tuple[float, float]):
-        pass
+class Item:
+    image = None
 
-    def update(self):
-        pass
-
-class Ladder(Item):
     def __init__(self, pos: tuple[float, float]):
-        self.actor = Actor('ladder', pos)
+        self.actor = Actor(self.image, pos)
         self.anchor = pos
 
     def set_anchor(self, pos: tuple[float, float]):
@@ -74,9 +71,21 @@ class Ladder(Item):
 
     def draw(self):
         self.actor.draw()
+
+    def update(self):
+        pass
+
+class Ladder(Item):
+    image = 'ladder'
     
     def __str__(self):
         return "a ladder"
+
+class Block(Item):
+    image = 'ladder'
+
+    def __str__(self):
+        return "a block"
 
 class Storehouse:
     def __init__(self, ladder_count, block_count, position_x: float):
@@ -90,7 +99,9 @@ class Storehouse:
             return Ladder((self.position_x, 500))
 
     def take_block(self):
-        pass
+        if self.block_count > 0:
+            self.block_count -= 1
+            return Block((self.position_x, 500))
     
     @property
     def has_ladder(self):
